@@ -13,8 +13,9 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# 🔐 Clave secreta para sesiones
-app.secret_key = "Lenovo"
+# 👉 usa variable de entorno y por defecto “Lenovo”
+app.secret_key = os.environ.get("SECRET_KEY", "Lenovo")
+
 
 # Rutas base
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1213,8 +1214,6 @@ def notifications_view():
 
     return render_template("notifications.html", notifications=notifications, user=user)
 
-
-# ================== MAIN ==================
 
 # ================== MAIN ==================
 
