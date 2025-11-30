@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Notificaciones</h1>
+
+<section class="card">
+    {% if notifications %}
+        <ul>
+        {% for n in notifications %}
+            <li>
+                <strong>{{ n.created_at }}</strong> -
+                {% if n.type == "comment" %}
+                    {{ n.data.from_user }} comentó en tu post #{{ n.data.post_id }}: "{{ n.data.excerpt }}"
+                {% elif n.type == "reply" %}
+                    {{ n.data.from_user }} respondió tu comentario en el post #{{ n.data.post_id }}: "{{ n.data.excerpt }}"
+                {% elif n.type == "reaction" %}
+                    {{ n.data.from_user }} reaccionó ({{ n.data.reaction_type }}) a tu post #{{ n.data.post_id }}
+                {% else %}
+                    Notificación: {{ n.type }}
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No tienes notificaciones.</p>
+    {% endif %}
+</section>
+{% endblock %}

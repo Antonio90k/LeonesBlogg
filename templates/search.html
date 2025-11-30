@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Buscar en LeonesBlogg</h1>
+
+<section class="search-box card">
+    <form method="get" action="{{ url_for('search') }}" class="search-form">
+        <div class="search-row">
+            <label>
+                Texto o #tag o @usuario:
+                <input type="text"
+                       name="q"
+                       value="{{ q or '' }}"
+                       placeholder="Ej: viaje, @wendy, #meme, etc.">
+            </label>
+        </div>
+        <div class="search-row">
+            <label>
+                Usuario:
+                <input type="text"
+                       name="username"
+                       value="{{ username_filter or '' }}"
+                       placeholder="Nombre de usuario (para filtrar)">
+            </label>
+            <label>
+                Desde:
+                <input type="date"
+                       name="date_from"
+                       value="{{ date_from or '' }}">
+            </label>
+            <label>
+                Hasta:
+                <input type="date"
+                       name="date_to"
+                       value="{{ date_to or '' }}">
+            </label>
+        </div>
+        <div class="search-row">
+            <button type="submit">Buscar</button>
+            <a href="{{ url_for('search') }}" class="btn-secondary">Limpiar filtros</a>
+        </div>
+    </form>
+</section>
+
+{% if q or username_filter or date_from or date_to %}
+    <p>
+        Resultados para:
+        {% if q %}<strong>"{{ q }}"</strong>{% endif %}
+        {% if username_filter %} · usuario contiene <strong>"{{ username_filter }}"</strong>{% endif %}
+        {% if date_from %} · desde <strong>{{ date_from }}</strong>{% endif %}
+        {% if date_to %} · hasta <strong>{{ date_to }}</strong>{% endif %}
+    </p>
+{% endif %}
+
+<section class="posts">
+    {% if posts %}
+        {% for post in posts %}
+            <article class="post card">
+                <header class="post-header">
+                    <h2>
+                        <a href="{{ url_for('view_post', post_id=post.id) }}">
+                            {{ post.title }}
+                        </a>
+                    </h2>
+                    <p class="meta">
+                        <span class="user-inline">
+                            <img
+                                src="{% if post.user_profile_image %}{{ url_for('static', filename='avatars/' ~ post.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                alt="Avatar de {{ post.username }}"
+                                class="avatar-inline">
+                            <a href="{{ url_for('profile', username=post.username) }}">
+                                {{ post.username }}
+                            </a>
+                        </span>
+                        · {{ post.created_at }}
+                    </p>
+                </header>
+
+                <p>
+                    {{ post.content[:220]|linkify_mentions }}
+                    {% if post.content|length > 220 %}...{% endif %}
+                </p>
+
+                {% if post.image_filename %}
+                    <div class="post-image-wrapper">
+                        <img src="{{ url_for('static', filename='uploads/' ~ post.image_filename) }}"
+                             alt="Imagen del post"
+                             class="post-image">
+                    </div>
+                {% endif %}
+
+                <div class="reactions-summary">
+                    Reacciones:
+                    👍 {{ post.reactions_by_type.get('like', 0) }}
+                    ❤️ {{ post.reactions_by_type.get('love', 0) }}
+                    😮 {{ post.reactions_by_type.get('wow', 0) }}
+                    😢 {{ post.reactions_by_type.get('sad', 0) }}
+                    😡 {{ post.reactions_by_type.get('angry', 0) }}
+                    · Comentarios: {{ post.comments_count or 0 }}
+                </div>
+
+                <div class="post-actions">
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn-small">
+                        Ver publicación
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p>No se encontraron publicaciones con esos filtros.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

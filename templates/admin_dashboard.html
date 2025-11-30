@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button type="button" class="btn-secondary" onclick="history.back()">
+    ← Volver
+</button>
+
+<h1>Panel de administración</h1>
+
+
+<section class="admin-stats">
+    <div class="card stat-card">
+        <h2>Usuarios</h2>
+        <p>{{ users_count }}</p>
+    </div>
+    <div class="card stat-card">
+        <h2>Publicaciones</h2>
+        <p>{{ posts_count }}</p>
+    </div>
+    <div class="card stat-card">
+        <h2>Comentarios</h2>
+        <p>{{ comments_count }}</p>
+    </div>
+    <div class="card stat-card">
+        <h2>Reportes</h2>
+        <p>{{ reports_count }}</p>
+    </div>
+</section>
+
+<h2>Reportes recientes</h2>
+
+<div class="card">
+    <table class="reports-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Reportado por</th>
+                <th>Motivo</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in reports %}
+            <tr>
+                <td>{{ r.id }}</td>
+                <td>{{ r.reporter or "Desconocido" }}</td>
+                <td>{{ r.reason }}</td>
+                <td>{{ r.created_at }}</td>
+                <td>
+                    {% if r.post_id %}
+                        Publicación #{{ r.post_id }}
+                    {% elif r.comment_id %}
+                        Comentario #{{ r.comment_id }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if r.post_id %}
+                        {% if r.post_exists %}
+                            <a href="{{ url_for('view_post', post_id=r.post_id) }}">Ver publicación</a>
+                        {% else %}
+                            <span class="tag tag-muted">Publicación eliminada</span>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if r.comment_id %}
+                        {% if r.comment_exists and r.post_id %}
+                            <a href="{{ url_for('view_post', post_id=r.post_id) }}#comment-{{ r.comment_id }}">
+                                Ver comentario
+                            </a>
+                        {% else %}
+                            <span class="tag tag-muted">Comentario eliminado</span>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6">No hay reportes recientes.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

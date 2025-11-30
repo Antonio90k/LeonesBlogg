@@ -1,0 +1,718 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Timeline</h1>
+
+{% if user %}
+<!-- ======================= NUEVA PUBLICACIÓN ======================= -->
+<article class="card new-post-card">
+    <header class="new-post-header">
+        <img
+            src="{% if user.profile_image %}{{ url_for('static', filename='avatars/' ~ user.profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+            alt="Avatar de {{ user.username }}"
+            class="new-post-avatar">
+        <div class="new-post-header-text">
+            <div class="new-post-username">{{ user.username }}</div>
+            <div class="new-post-prompt">¿Qué quieres compartir hoy?</div>
+        </div>
+    </header>
+
+    <form class="new-post-form"
+          method="post"
+          action="{{ url_for('create_post') }}"
+          enctype="multipart/form-data">
+        <div class="new-post-main">
+            <div class="new-post-field">
+                <label for="title-input">Título (opcional)</label>
+                <input type="text"
+                       id="title-input"
+                       name="title"
+                       placeholder="Escribe un título corto...">
+            </div>
+
+            <div class="new-post-field">
+                <label for="content-input">
+                    Contenido (opcional)
+                    <span id="content-counter" class="content-counter">0 / 500</span>
+                </label>
+                <textarea id="content-input"
+                          name="content"
+                          maxlength="500"
+                          placeholder="Escribe algo, sube una foto o un video..."></textarea>
+                <p class="new-post-hint">
+                    Puedes dejar título y contenido vacíos si subes solo una imagen o video.
+                </p>
+            </div>
+
+            <div class="new-post-media-row">
+                <div class="new-post-media-left">
+                    <label for="image-input">Imágenes o videos (opcional)</label>
+                    <input type="file"
+                           id="image-input"
+                           name="image"
+                           accept="image/*,video/*"
+                           multiple>
+                    <p class="new-post-formats">
+                        Formatos permitidos: JPG, PNG, GIF, WEBP, MP4, WEBM, OGG.
+                    </p>
+                </div>
+                <div class="new-post-media-preview" id="media-preview" style="display:none;">
+                    <button class="media-nav-btn" id="media-prev" title="Anterior">‹</button>
+                    <div class="media-preview-inner" id="media-preview-inner"></div>
+                    <button class="media-nav-btn" id="media-next" title="Siguiente">›</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="new-post-footer">
+            <button type="submit">Publicar</button>
+        </footer>
+    </form>
+</article>
+{% else %}
+<div class="card">
+    <p>
+        <a href="{{ url_for('login') }}">Inicia sesión</a> para crear nuevas publicaciones.
+    </p>
+</div>
+{% endif %}
+
+<!-- ======================= LISTA DE POSTS ======================= -->
+<section class="posts">
+    {% for post in posts %}
+        <article class="post card post-fixed"
+                 data-post-id="{{ post.id }}">
+            <header class="post-header">
+                <h2>{{ post.title or 'Publicación' }}</h2>
+                <p class="meta">
+                    <span class="user-inline">
+                        <img
+                            src="{% if post.user_profile_image %}{{ url_for('static', filename='avatars/' ~ post.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                            alt="Avatar de {{ post.username }}"
+                            class="avatar-inline">
+                        <a href="{{ url_for('profile', username=post.username) }}">{{ post.username }}</a>
+                    </span>
+                    · {{ post.created_at }}
+                </p>
+            </header>
+
+            <div class="post-text-body">
+                <p>{{ post.content|linkify_mentions }}</p>
+            </div>
+
+            {# ================== MEDIOS (1 o varios) ================== #}
+            {% if post.image_filename %}
+                {% set media_files = post.image_filename.split('||') %}
+                <div class="post-media-wrapper"
+                     data-post-id="{{ post.id }}"
+                     data-media-list="{{ media_files|join('::') }}"
+                     data-current-index="0">
+                    {% if media_files|length > 1 %}
+                        <button class="post-media-nav post-media-prev" type="button">‹</button>
+                        <button class="post-media-nav post-media-next" type="button">›</button>
+                    {% endif %}
+
+                    <div class="post-media-inner">
+                        {% set first = media_files[0] %}
+                        {% set ext = first.rsplit('.', 1)[1]|lower %}
+                        {% if ext in ['jpg','jpeg','png','gif','webp'] %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ first) }}"
+                                 alt="Imagen del post"
+                                 class="post-media post-image"
+                                 data-full-src="{{ url_for('static', filename='uploads/' ~ first) }}">
+                        {% elif ext in ['mp4','webm','ogg'] %}
+                            <video class="post-media post-video"
+                                   data-full-src="{{ url_for('static', filename='uploads/' ~ first) }}"
+                                   controls>
+                                <source src="{{ url_for('static', filename='uploads/' ~ first) }}"
+                                        type="video/{{ ext }}">
+                                Tu navegador no soporta video.
+                            </video>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="reactions-summary">
+                Reacciones:
+                👍 <span id="react-like-{{ post.id }}">{{ post.reactions_by_type.get('like', 0) }}</span>
+                ❤️ <span id="react-love-{{ post.id }}">{{ post.reactions_by_type.get('love', 0) }}</span>
+                😮 <span id="react-wow-{{ post.id }}">{{ post.reactions_by_type.get('wow', 0) }}</span>
+                😢 <span id="react-sad-{{ post.id }}">{{ post.reactions_by_type.get('sad', 0) }}</span>
+                😡 <span id="react-angry-{{ post.id }}">{{ post.reactions_by_type.get('angry', 0) }}</span>
+                · Comentarios:
+                <span id="comments-count-{{ post.id }}">{{ post.comments|length }}</span>
+            </div>
+
+            {% if user %}
+            <div class="post-actions">
+                <form method="post"
+                      action="{{ url_for('react_post', post_id=post.id) }}"
+                      data-react-form>
+                    <button type="submit" name="reaction_type" value="like">👍 Like</button>
+                    <button type="submit" name="reaction_type" value="love">❤️ Love</button>
+                    <button type="submit" name="reaction_type" value="wow">😮 Wow</button>
+                    <button type="submit" name="reaction_type" value="sad">😢 Sad</button>
+                    <button type="submit" name="reaction_type" value="angry">😡 Angry</button>
+                </form>
+
+                <form method="post" action="{{ url_for('toggle_save_post', post_id=post.id) }}">
+                    <button type="submit">⭐ Guardar</button>
+                </form>
+
+                <button type="button" class="share-btn" data-post-id="{{ post.id }}">Compartir</button>
+
+                <form method="post" action="{{ url_for('report_post', post_id=post.id) }}">
+                    <input type="hidden" name="reason" value="Inapropiado">
+                    <button type="submit">Reportar</button>
+                </form>
+
+                {% if user.id == post.user_id %}
+                    <a href="{{ url_for('edit_own_post', post_id=post.id) }}" class="btn-link">✏️ Editar</a>
+                    <form method="post"
+                          action="{{ url_for('delete_own_post', post_id=post.id) }}"
+                          style="display:inline;"
+                          onsubmit="return confirm('¿Seguro que quieres borrar este post?');">
+                        <button type="submit" class="danger">🗑 Eliminar</button>
+                    </form>
+                {% elif admin_allowed %}
+                    <form method="post"
+                          action="{{ url_for('delete_post', post_id=post.id) }}"
+                          onsubmit="return confirm('¿Seguro que quieres borrar este post?');">
+                        <button type="submit" class="danger">Eliminar (admin)</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <section class="comments">
+                <h3>Comentarios</h3>
+
+                <ul class="comments-list" data-comments-list="{{ post.id }}">
+                    {% set all_comments = post.comments %}
+                    {% for c in all_comments if not c.parent_comment_id %}
+                        <li class="comment" data-comment-id="{{ c.id }}">
+                            <div class="comment-main">
+                                <div class="comment-body">
+                                    <span class="user-inline">
+                                        <img
+                                            src="{% if c.user_profile_image %}{{ url_for('static', filename='avatars/' ~ c.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                            alt="Avatar de {{ c.username }}"
+                                            class="avatar-inline">
+                                        <a href="{{ url_for('profile', username=c.username) }}">{{ c.username }}</a>
+                                    </span>
+                                    : {{ c.content|linkify_mentions }}
+                                    <span class="comment-date">{{ c.created_at }}</span>
+                                </div>
+                            </div>
+
+                            {% if user %}
+                                <button type="button"
+                                        class="reply-toggle"
+                                        data-target="{{ c.id }}">
+                                    Responder
+                                </button>
+
+                                <form method="post"
+                                      action="{{ url_for('comment_post', post_id=post.id) }}"
+                                      class="comment-form reply-form"
+                                      data-comment-form
+                                      data-parent-id="{{ c.id }}"
+                                      style="display:none; margin-left:1.5rem; margin-top:0.3rem;">
+                                    <input type="text" name="content" placeholder="Responder..." required>
+                                    <input type="hidden" name="parent_comment_id" value="{{ c.id }}">
+                                    <button type="submit">Responder</button>
+                                </form>
+                            {% endif %}
+
+                            <ul class="replies"
+                                data-replies-for="{{ c.id }}"
+                                style="margin-left:1.5rem; margin-top:0.3rem;">
+                                {% for r in all_comments if r.parent_comment_id == c.id %}
+                                    <li class="comment-reply" data-comment-id="{{ r.id }}">
+                                        <div class="comment-main">
+                                            <div class="comment-body">
+                                                <span class="user-inline">
+                                                    <img
+                                                        src="{% if r.user_profile_image %}{{ url_for('static', filename='avatars/' ~ r.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                                        alt="Avatar de {{ r.username }}"
+                                                        class="avatar-inline">
+                                                    <a href="{{ url_for('profile', username=r.username) }}">{{ r.username }}</a>
+                                                </span>
+                                                : {{ r.content|linkify_mentions }}
+                                                <span class="comment-date">{{ r.created_at }}</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if user %}
+                <form method="post"
+                      action="{{ url_for('comment_post', post_id=post.id) }}"
+                      class="comment-form"
+                      data-comment-form>
+                    <input type="text"
+                           name="content"
+                           placeholder="Escribe un comentario..."
+                           required>
+                    <input type="hidden" name="parent_comment_id" value="">
+                    <button type="submit">Comentar</button>
+                </form>
+                {% endif %}
+            </section>
+        </article>
+    {% else %}
+        <div class="card">
+            <p>Aún no hay posts.</p>
+        </div>
+    {% endfor %}
+</section>
+
+<!-- =========== MODAL PARA ZOOM DE IMAGEN/VIDEO =========== -->
+<div id="media-modal" class="media-modal hidden">
+    <div class="media-modal-backdrop"></div>
+    <div class="media-modal-content">
+        <button class="media-modal-close" type="button">×</button>
+        <div class="media-modal-body"></div>
+    </div>
+</div>
+
+<script>
+/* ====== contador y preview del formulario ====== */
+(function () {
+    const contentInput = document.getElementById("content-input");
+    const counterSpan = document.getElementById("content-counter");
+    const mediaInput = document.getElementById("image-input");
+    const previewBox = document.getElementById("media-preview");
+    const previewInner = document.getElementById("media-preview-inner");
+    const prevBtn = document.getElementById("media-prev");
+    const nextBtn = document.getElementById("media-next");
+
+    let files = [];
+    let currentIndex = 0;
+
+    if (contentInput && counterSpan) {
+        const updateCounter = () => {
+            const len = contentInput.value.length;
+            counterSpan.textContent = `${len} / 500`;
+        };
+        updateCounter();
+        contentInput.addEventListener("input", updateCounter);
+    }
+
+    function renderPreview() {
+        if (!files.length) {
+            previewBox.style.display = "none";
+            previewInner.innerHTML = "";
+            return;
+        }
+        const file = files[currentIndex];
+        const url = URL.createObjectURL(file);
+        previewBox.style.display = "flex";
+        previewInner.innerHTML = "";
+
+        if (file.type && file.type.startsWith("video/")) {
+            const v = document.createElement("video");
+            v.controls = true;
+            v.src = url;
+            v.className = "preview-media";
+            previewInner.appendChild(v);
+        } else {
+            const img = document.createElement("img");
+            img.src = url;
+            img.className = "preview-media";
+            previewInner.appendChild(img);
+        }
+    }
+
+    if (mediaInput) {
+        mediaInput.addEventListener("change", () => {
+            files = Array.from(mediaInput.files || []);
+            currentIndex = 0;
+            renderPreview();
+        });
+    }
+
+    if (prevBtn && nextBtn) {
+        prevBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (!files.length) return;
+            currentIndex = (currentIndex - 1 + files.length) % files.length;
+            renderPreview();
+        });
+        nextBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (!files.length) return;
+            currentIndex = (currentIndex + 1) % files.length;
+            renderPreview();
+        });
+    }
+})();
+
+/* ====== Helpers existentes (reacciones, comentarios, sync) ====== */
+function avatarUrl(profileImage) {
+    if (profileImage) {
+        return "/static/avatars/" + profileImage;
+    }
+    return "{{ DEFAULT_AVATAR_URL }}";
+}
+
+function updateReactionsUI(data) {
+    const postId = data.post_id;
+    const reactions = data.reactions || {};
+    const commentsCount = (data.comments_count !== undefined && data.comments_count !== null)
+        ? data.comments_count
+        : null;
+
+    const likeSpan   = document.getElementById("react-like-"   + postId);
+    const loveSpan   = document.getElementById("react-love-"   + postId);
+    const wowSpan    = document.getElementById("react-wow-"    + postId);
+    const sadSpan    = document.getElementById("react-sad-"    + postId);
+    const angrySpan  = document.getElementById("react-angry-"  + postId);
+    const commentsSpan = document.getElementById("comments-count-" + postId);
+
+    if (likeSpan)   likeSpan.textContent   = reactions.like  || 0;
+    if (loveSpan)   loveSpan.textContent   = reactions.love  || 0;
+    if (wowSpan)    wowSpan.textContent    = reactions.wow   || 0;
+    if (sadSpan)    sadSpan.textContent    = reactions.sad   || 0;
+    if (angrySpan)  angrySpan.textContent  = reactions.angry || 0;
+    if (commentsSpan && commentsCount !== null) commentsSpan.textContent = commentsCount;
+}
+
+/* --- AJAX reacciones --- */
+document.querySelectorAll("form[data-react-form]").forEach(form => {
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const submitter = e.submitter;
+        const formData = new FormData(form);
+        if (submitter && submitter.name) {
+            formData.set(submitter.name, submitter.value);
+        }
+        try {
+            const res = await fetch(form.action, {
+                method: "POST",
+                body: formData,
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            });
+            if (!res.ok) {
+                if (res.status === 403) {
+                    const data = await res.json().catch(() => null);
+                    if (data && data.error === "restricted") {
+                        alert("Estás restringido hasta: " + (data.until || "más tarde") + ". No puedes reaccionar.");
+                    }
+                }
+                return;
+            }
+            const data = await res.json();
+            if (data.ok) updateReactionsUI(data);
+        } catch (err) { console.error(err); }
+    });
+});
+
+/* --- Comentarios (helpers existentes) --- */
+function attachReplyToggleListeners(root=document) {
+    root.querySelectorAll(".reply-toggle").forEach(btn => {
+        if (btn.dataset.bound) return;
+        btn.dataset.bound = "1";
+        btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-target");
+            const form = root.querySelector(`form.reply-form[data-parent-id="${id}"]`);
+            if (form) {
+                form.style.display = (form.style.display === "none" || !form.style.display)
+                    ? "flex"
+                    : "none";
+            }
+        });
+    });
+}
+
+function attachCommentFormListeners(root=document) {
+    root.querySelectorAll("form[data-comment-form]").forEach(form => {
+        if (form.dataset.bound) return;
+        form.dataset.bound = "1";
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const res = await fetch(form.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {"X-Requested-With": "XMLHttpRequest"}
+                });
+                if (!res.ok) {
+                    if (res.status === 403) {
+                        const data = await res.json().catch(() => null);
+                        if (data && data.error === "restricted") {
+                            alert("Estás restringido hasta: " + (data.until || "más tarde") + ". No puedes comentar.");
+                        }
+                    }
+                    return;
+                }
+                const data = await res.json();
+                if (!data.ok) return;
+                appendCommentFromData(data);
+                form.reset();
+            } catch (err) { console.error(err); }
+        });
+    });
+}
+
+attachReplyToggleListeners(document);
+attachCommentFormListeners(document);
+
+function appendCommentFromData(data) {
+    const c = data.comment;
+    const postId = data.post_id;
+
+    if (c.parent_comment_id) {
+        const repliesUl = document.querySelector('ul[data-replies-for="' + c.parent_comment_id + '"]');
+        if (repliesUl) {
+            const li = document.createElement("li");
+            li.className = "comment-reply";
+            li.setAttribute("data-comment-id", c.id);
+            li.innerHTML = `
+                <div class="comment-main">
+                    <div class="comment-body">
+                        <span class="user-inline">
+                            <img src="${avatarUrl(c.profile_image)}"
+                                 alt="Avatar de ${c.username}"
+                                 class="avatar-inline">
+                            <a href="/profile/${encodeURIComponent(c.username)}">${c.username}</a>
+                        </span>
+                        : ${c.content}
+                        <span class="comment-date">${c.created_at}</span>
+                    </div>
+                </div>`;
+            repliesUl.appendChild(li);
+        }
+    } else {
+        const list = document.querySelector('ul[data-comments-list="' + postId + '"]');
+        if (list) {
+            const li = document.createElement("li");
+            li.className = "comment";
+            li.setAttribute("data-comment-id", c.id);
+            li.innerHTML = `
+                <div class="comment-main">
+                    <div class="comment-body">
+                        <span class="user-inline">
+                            <img src="${avatarUrl(c.profile_image)}"
+                                 alt="Avatar de ${c.username}"
+                                 class="avatar-inline">
+                            <a href="/profile/${encodeURIComponent(c.username)}">${c.username}</a>
+                        </span>
+                        : ${c.content}
+                        <span class="comment-date">${c.created_at}</span>
+                    </div>
+                </div>
+                <button type="button" class="reply-toggle" data-target="${c.id}">Responder</button>
+                <form method="post"
+                      action="/posts/${postId}/comment"
+                      class="comment-form reply-form"
+                      data-comment-form
+                      data-parent-id="${c.id}"
+                      style="display:none; margin-left:1.5rem; margin-top:0.3rem;">
+                    <input type="text" name="content" placeholder="Responder..." required>
+                    <input type="hidden" name="parent_comment_id" value="${c.id}">
+                    <button type="submit">Responder</button>
+                </form>
+                <ul class="replies" data-replies-for="${c.id}"
+                    style="margin-left:1.5rem; margin-top:0.3rem;"></ul>`;
+            list.appendChild(li);
+
+            attachReplyToggleListeners(li);
+            attachCommentFormListeners(li);
+        }
+    }
+
+    if (data.comments_count !== undefined && data.comments_count !== null) {
+        const commentsSpan = document.getElementById("comments-count-" + postId);
+        if (commentsSpan) commentsSpan.textContent = data.comments_count;
+    }
+}
+
+/* --- Refresco de reacciones --- */
+async function refreshReactionsAndComments() {
+    try {
+        const res = await fetch("{{ url_for('reactions_summary') }}", {cache: "no-store"});
+        if (!res.ok) return;
+        const data = await res.json();
+        data.forEach(updateReactionsUI);
+    } catch (e) {}
+}
+setInterval(refreshReactionsAndComments, 5000);
+
+/* --- sync eventos --- */
+let lastEventId = Number('{{ last_event_id|default(0) }}' || '0');
+const currentUserId = document.body.dataset.userId || null;
+
+async function pollEvents() {
+    try {
+        const res = await fetch("{{ url_for('sync_events') }}?last_event_id=" + lastEventId,
+                                {cache: "no-store"});
+        if (!res.ok) return;
+        const events = await res.json();
+        if (!Array.isArray(events)) return;
+
+        for (const ev of events) {
+            if (ev.id > lastEventId) lastEventId = ev.id;
+            applyEventOnClient(ev);
+        }
+    } catch (e) { console.error(e); }
+}
+
+function applyEventOnClient(ev) {
+    const type = ev.event_type;
+    const payload = ev.payload || {};
+
+    if (currentUserId && String(payload.user_id || "") === String(currentUserId)) {
+        return;
+    }
+
+    if (type === "COMMENT_POST") {
+        const cid = payload.comment_id;
+        if (!cid) return;
+        fetch("/api/comments/" + cid, {cache: "no-store"})
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data || !data.ok) return;
+                const c = data.comment;
+                const fakeData = {
+                    ok: true,
+                    post_id: c.post_id,
+                    comment: {
+                        id: c.id,
+                        username: c.username,
+                        content: c.content,
+                        created_at: c.created_at,
+                        parent_comment_id: c.parent_comment_id,
+                        profile_image: c.profile_image
+                    },
+                    comments_count: null
+                };
+                appendCommentFromData(fakeData);
+            })
+            .catch(err => console.error(err));
+
+    } else if (type === "CREATE_POST" || type === "UPDATE_POST" || type === "DELETE_POST") {
+        // Aquí podrías mostrar el botón flotante de "Hay nuevas publicaciones"
+        // en vez de recargar directo. De momento mantenemos reload:
+        window.location.reload();
+    }
+}
+setInterval(pollEvents, 2000);
+
+/* --- compartir --- */
+document.querySelectorAll(".share-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const postId = btn.getAttribute("data-post-id");
+        const url = window.location.origin + "/posts/" + postId;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Enlace copiado: " + url);
+            }).catch(() => { alert("Enlace: " + url); });
+        } else {
+            alert("Enlace: " + url);
+        }
+    });
+});
+
+/* ====== CARRUSEL POR PUBLICACIÓN ====== */
+document.querySelectorAll(".post-media-wrapper").forEach(wrapper => {
+    const inner = wrapper.querySelector(".post-media-inner");
+    const prev = wrapper.querySelector(".post-media-prev");
+    const next = wrapper.querySelector(".post-media-next");
+    const listStr = wrapper.dataset.mediaList || "";
+    if (!listStr) return;
+
+    const files = listStr.split("::");
+    let index = 0;
+
+    function render() {
+        const file = files[index];
+        if (!file) return;
+        const ext = file.split(".").pop().toLowerCase();
+        inner.innerHTML = "";
+        const fullSrc = "/static/uploads/" + file;
+
+        if (["jpg","jpeg","png","gif","webp"].includes(ext)) {
+            const img = document.createElement("img");
+            img.src = fullSrc;
+            img.className = "post-media post-image";
+            img.dataset.fullSrc = fullSrc;
+            inner.appendChild(img);
+        } else if (["mp4","webm","ogg"].includes(ext)) {
+            const v = document.createElement("video");
+            v.className = "post-media post-video";
+            v.dataset.fullSrc = fullSrc;
+            v.controls = true;
+            const s = document.createElement("source");
+            s.src = fullSrc;
+            s.type = "video/" + ext;
+            v.appendChild(s);
+            inner.appendChild(v);
+        }
+    }
+
+    if (files.length > 1) {
+        if (prev) prev.addEventListener("click", () => {
+            index = (index - 1 + files.length) % files.length;
+            render();
+        });
+        if (next) next.addEventListener("click", () => {
+            index = (index + 1) % files.length;
+            render();
+        });
+    }
+    render();
+});
+
+/* ====== MODAL ZOOM ====== */
+const modal = document.getElementById("media-modal");
+const modalBody = modal.querySelector(".media-modal-body");
+const modalClose = modal.querySelector(".media-modal-close");
+const modalBackdrop = modal.querySelector(".media-modal-backdrop");
+
+function openMediaModal(src, isVideo) {
+    modalBody.innerHTML = "";
+    if (isVideo) {
+        const v = document.createElement("video");
+        v.src = src;
+        v.controls = true;
+        v.autoplay = true;
+        v.className = "modal-media";
+        modalBody.appendChild(v);
+    } else {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = "modal-media";
+        modalBody.appendChild(img);
+    }
+    modal.classList.remove("hidden");
+}
+
+function closeMediaModal() {
+    modal.classList.add("hidden");
+    modalBody.innerHTML = "";
+}
+
+document.addEventListener("click", (e) => {
+    const media = e.target.closest(".post-media");
+    if (media) {
+        const src = media.dataset.fullSrc || media.currentSrc || media.src;
+        const isVideo = media.tagName.toLowerCase() === "video";
+        openMediaModal(src, isVideo);
+    }
+});
+
+modalClose.addEventListener("click", closeMediaModal);
+modalBackdrop.addEventListener("click", closeMediaModal);
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMediaModal();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>LeonesBlogg</title>
+    <!-- Esto sí puede usar url_for porque 'static' siempre existe -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body
+    {% if user %}data-user-id="{{ user.id }}"{% endif %}
+    data-notif-url="/api/notifications/new"
+>
+<nav class="navbar">
+    <div class="nav-left">
+        <!-- Inicio -->
+        <a href="/" class="brand">LeonesBlogg</a>
+
+        <!-- Buscador -->
+        <form action="/search" method="get" class="nav-search">
+            <input type="text" name="q" placeholder="Buscar... (#tag, @user, texto)">
+        </form>
+    </div>
+
+    <div class="nav-right">
+        {% if user and admin_allowed %}
+            <!-- Panel de admin -->
+            <a href="/admin/dashboard" class="nav-icon">⚙ Panel</a>
+        {% endif %}
+
+        {% if user %}
+            <!-- Campanita de notificaciones -->
+            <a href="/notifications" class="nav-icon" id="notif-icon">
+                🔔
+                {% if notifications_count > 0 %}
+                    <span class="badge">{{ notifications_count }}</span>
+                {% endif %}
+            </a>
+
+            <span class="nav-user">Hola, {{ user.username }}</span>
+            <!-- Perfil del usuario logueado -->
+            <a href="/profile/{{ user.username }}">Mi perfil</a>
+            <!-- Logout SIN url_for para evitar el BuildError -->
+            <a href="/logout">Cerrar sesión</a>
+        {% else %}
+            <a href="/login">Iniciar sesión</a>
+            <a href="/register">Registrarse</a>
+        {% endif %}
+    </div>
+</nav>
+
+<main class="container">
+    {% block content %}{% endblock %}
+</main>
+
+<!-- contenedor para toasts flotantes -->
+<div id="toast-container"></div>
+
+<script>
+// URL del API de notificaciones viene en un data-* del <body>
+const notifUrl = document.body.dataset.notifUrl || null;
+
+// Llama al API de notificaciones nuevas (para los toasts)
+async function pollNotifications() {
+    if (!notifUrl) return;
+    try {
+        const res = await fetch(notifUrl, { cache: "no-store" });
+        if (!res.ok) return;
+        const items = await res.json();
+        if (!Array.isArray(items)) return;
+        items.forEach(showToast);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+// Muestra un toast flotante
+function showToast(n) {
+    const box = document.createElement("div");
+    box.className = "toast";
+
+    const data = n.data || {};
+    let text = "";
+
+    if (n.type === "reaction") {
+        text = (data.from_user || "Alguien") +
+               " reaccionó a tu publicación (" +
+               (data.reaction_type || "") + ")";
+    } else if (n.type === "comment") {
+        text = (data.from_user || "Alguien") +
+               " comentó tu publicación: \"" +
+               (data.excerpt || "") + "\"";
+    } else if (n.type === "reply") {
+        text = (data.from_user || "Alguien") +
+               " respondió tu comentario: \"" +
+               (data.excerpt || "") + "\"";
+    } else {
+        text = "Nueva notificación";
+    }
+
+    box.textContent = text;
+    document.getElementById("toast-container").appendChild(box);
+
+    setTimeout(() => {
+        box.classList.add("toast-hide");
+        setTimeout(() => box.remove(), 700);
+    }, 4000);
+}
+
+// si el body tiene data-user-id, entonces hay usuario logueado
+document.addEventListener("DOMContentLoaded", () => {
+    const hasUser = !!document.body.dataset.userId;
+    if (hasUser) {
+        // cada 5s revisa notificaciones nuevas
+        setInterval(pollNotifications, 5000);
+    }
+});
+</script>
+
+<!-- =============== MODAL DE IMAGEN/VIDEO =============== -->
+<div id="media-modal" class="media-modal">
+    <span class="media-modal-close">&times;</span>
+    <div class="media-modal-content">
+        <img id="modal-img" style="display:none;">
+        <video id="modal-video" controls style="display:none; max-height:90vh;"></video>
+    </div>
+</div>
+
+<script>
+// ======================= ABRIR IMAGEN / VIDEO =======================
+document.addEventListener("click", function(e) {
+    const el = e.target;
+
+    // Si la clase del elemento corresponde a imagen o video dentro del post
+    if (el.classList.contains("post-image") || el.classList.contains("post-video")) {
+        const modal = document.getElementById("media-modal");
+        const modalImg = document.getElementById("modal-img");
+        const modalVid = document.getElementById("modal-video");
+
+        // Reseteamos
+        modalImg.style.display = "none";
+        modalVid.style.display = "none";
+
+        if (el.tagName === "IMG") {
+            modalImg.src = el.src;
+            modalImg.style.display = "block";
+        } else if (el.tagName === "VIDEO") {
+            modalVid.src = el.querySelector("source").src;
+            modalVid.style.display = "block";
+        }
+
+        modal.style.display = "flex";
+    }
+});
+
+// ======================= CERRAR =======================
+document.querySelector(".media-modal-close").addEventListener("click", () => {
+    document.getElementById("media-modal").style.display = "none";
+    document.getElementById("modal-video").pause();
+});
+
+document.getElementById("media-modal").addEventListener("click", (e) => {
+    if (e.target.id === "media-modal") {
+        document.getElementById("media-modal").style.display = "none";
+        document.getElementById("modal-video").pause();
+    }
+});
+</script>
+
+
+</body>
+</html>

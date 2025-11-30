@@ -1,0 +1,898 @@
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+a {
+    color: #38bdf8;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.navbar {
+    background: #020617;
+    border-bottom: 1px solid #1f2937;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.nav-right a,
+.nav-right span {
+    margin-left: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #38bdf8;
+}
+
+.nav-search input {
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: #020617;
+    color: #e5e7eb;
+    font-size: 0.85rem;
+}
+
+.nav-icon {
+    position: relative;
+}
+
+.badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.5rem;
+    background: #ef4444;
+    color: white;
+    font-size: 0.6rem;
+    border-radius: 999px;
+    padding: 0 0.25rem;
+}
+
+.container {
+    max-width: 900px;
+    margin: 1.5rem auto 2rem;
+    padding: 0 1rem;
+}
+
+.card {
+    background: #020617;
+    border-radius: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid #1f2937;
+}
+
+.posts .post {
+    margin-bottom: 1.5rem;
+}
+
+h1, h2, h3 {
+    margin-top: 0;
+    color: #e5e7eb;
+}
+
+.meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.post-image-wrapper {
+    margin-top: 0.5rem;
+}
+
+.post-image {
+    max-width: 100%;
+    border-radius: 0.5rem;
+    display: block;
+}
+
+.reactions-summary {
+    font-size: 0.85rem;
+    color: #cbd5f5;
+    margin-top: 0.4rem;
+}
+
+.post-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.post-actions form {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+button {
+    background: #1d4ed8;
+    border: none;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+button.danger {
+    background: #b91c1c;
+}
+
+button.danger:hover {
+    background: #dc2626;
+}
+
+.comments {
+    margin-top: 0.75rem;
+    border-top: 1px solid #1f2937;
+    padding-top: 0.75rem;
+}
+
+.comments ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.25rem 0 0.5rem;
+}
+
+.comments li {
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+}
+
+.comment-date {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-left: 0.4rem;
+}
+
+.comment-form {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+}
+
+.comment-form input[type="text"] {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+
+.comment-form input[type="text"]:focus {
+    outline: none;
+    border-color: #38bdf8;
+}
+
+.reply-toggle {
+    background: transparent;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    color: #e5e7eb;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.75rem;
+}
+
+.reply-toggle:hover {
+    background: #111827;
+}
+
+.new-post textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+    margin: 0.25rem 0 0.4rem;
+}
+
+.new-post input[type="text"] {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+    margin-bottom: 0.35rem;
+}
+
+.new-post input[type="file"] {
+    font-size: 0.8rem;
+}
+
+.no-comments {
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.auth-card label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.auth-card input[type="text"],
+.auth-card input[type="password"],
+.auth-card input[type="url"] {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+
+.auth-card textarea {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+
+.error {
+    color: #f97373;
+    font-size: 0.9rem;
+}
+
+/* Avatar pequeño junto al nombre */
+.user-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.avatar-inline {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+/* Regla general para imágenes (posts, etc.) */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Avatar pequeño en posts y comentarios */
+.avatar-inline {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* === AVATAR GRANDE DEL PERFIL (CÍRCULO) === */
+.profile-avatar {
+    width: 140px;          /* puedes ajustar el tamaño */
+    height: 140px;
+    border-radius: 50%;    /* redondo */
+    object-fit: cover;     /* recorta para que no se deforme */
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/* Opcional: centrado del bloque de cabecera del perfil */
+.profile-header-card {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+
+@media (max-width: 640px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+    .nav-right a,
+    .nav-right span {
+        margin-left: 0;
+        margin-right: 0.75rem;
+    }
+}
+
+/* ========================= */
+/*  BLOQUE NUEVO AGREGADO   */
+/* ========================= */
+
+/* Tarjeta de solo texto más bonita */
+.text-only-card {
+    max-width: 650px;
+    margin: 0 auto 1rem auto;
+    padding: 1.2rem 1.4rem;
+    line-height: 1.6;
+}
+
+/* Media (imagen o video) en posts */
+.post-media-wrapper {
+    margin-top: 0.5rem;
+}
+
+.post-video {
+    width: 100%;
+    max-height: 420px;
+    border-radius: 0.5rem;
+}
+
+/* Preview en creación de post (perfil) */
+.media-preview {
+    margin-top: 0.6rem;
+}
+
+.media-preview .preview-image,
+.media-preview .preview-video {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 0.5rem;
+    display: block;
+}
+.comments .comment-body {
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* Tarjeta de nueva publicación al inicio */
+.new-post-card {
+    margin-bottom: 1.5rem;
+}
+
+.new-post-header {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.new-post-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.new-post-form input[type="text"],
+.new-post-form textarea {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+}
+
+.new-post-form textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.new-post-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+}
+
+.new-post-preview {
+    margin-top: 0.4rem;
+}
+
+.new-post-preview img,
+.new-post-preview video {
+    max-width: 100%;
+    border-radius: 0.5rem;
+}
+
+/* Toast flotante de nuevas publicaciones */
+.toast-new-posts {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    background: #111827;
+    border-radius: 0.75rem;
+    border: 1px solid #1f2937;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    display: none;
+    z-index: 9999;
+    max-width: 260px;
+}
+.toast-new-posts {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 0.8rem 1rem;
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    z-index: 9999;
+    font-size: 0.9rem;
+}
+
+.toast-new-posts .toast-btn {
+    background: #3b82f6;
+    border: none;
+    color: #fff;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+
+.toast-new-posts span {
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+.toast-new-posts button {
+    font-size: 0.8rem;
+}
+
+
+/* Avatar grande en el perfil */
+.avatar-big {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Toasts de notificaciones flotantes */
+#toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.toast {
+    background: rgba(15, 23, 42, 0.95);
+    color: #e5e7eb;
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    min-width: 220px;
+    max-width: 320px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    font-size: 0.9rem;
+    border: 1px solid #1f2937;
+    animation: toast-in 0.2s ease-out;
+}
+
+.toast-body p {
+    margin: 0.25rem 0 0.4rem;
+}
+
+.toast a {
+    color: #38bdf8;
+    text-decoration: underline;
+    font-size: 0.8rem;
+}
+
+.toast.hide {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(20px) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) translateY(0);
+    }
+
+}
+/* ====== NUEVO: Compositor tipo Facebook ====== */
+.new-post-card {
+    max-width: 900px;
+    margin: 0 auto 1.5rem;
+}
+
+.new-post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.8rem;
+}
+
+.new-post-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.new-post-header-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.new-post-username {
+    font-weight: 600;
+}
+
+.new-post-prompt {
+    font-size: 0.9rem;
+    color: #9ca3af;
+}
+
+.new-post-form {
+    margin-top: 0.25rem;
+}
+
+.new-post-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.new-post-field label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.15rem;
+}
+
+.new-post-field input[type="text"],
+.new-post-field textarea {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+.new-post-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.new-post-hint {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+
+.content-counter {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.new-post-media-row {
+    margin-top: 0.3rem;
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+
+.new-post-media-left {
+    flex: 1 1 220px;
+}
+
+.new-post-media-left input[type="file"] {
+    font-size: 0.85rem;
+}
+
+.new-post-formats {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+}
+
+.new-post-media-preview {
+    flex: 1 1 260px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.media-preview-inner {
+    flex: 1;
+    max-width: 260px;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.preview-media {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.media-nav-btn {
+    border-radius: 999px;
+    border: 1px solid #374151;
+    background: #020617;
+    color: #e5e7eb;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+
+.media-nav-btn:hover {
+    background: #111827;
+}
+
+.new-post-footer {
+    margin-top: 0.9rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* ====== Posts de tamaño uniforme ====== */
+.post-fixed {
+    max-width: 900px;
+    margin: 0 auto 1.2rem;
+}
+
+.post-text-body {
+    margin-top: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: #020617;
+    border: 1px solid #1f2937;
+}
+
+.post-media-wrapper {
+    margin-top: 0.6rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    max-height: 420px;
+    background: #020617;
+}
+
+.post-media {
+    width: 100%;
+    max-height: 420px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Texto puro: cajita bonita con borde lateral */
+.text-only-card .post-text-body {
+    border-left: 4px solid #38bdf8;
+}
+
+/* Ajuste responsive */
+@media (max-width: 640px) {
+    .new-post-media-row {
+        flex-direction: column;
+    }
+    .new-post-card,
+    .post-fixed {
+        margin-left: 0;
+        margin-right: 0;
+    }
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.media-modal.hidden { display: none; }
+.media-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+}
+.media-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+}
+.media-modal-content {
+    position: absolute;
+    inset: 10%;
+    background: #050816;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+.media-modal-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.modal-media {
+    max-width: 100%;
+    max-height: 100%;
+}
+.media-modal-close {
+    align-self: flex-end;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+/* =============== MODAL PARA IMÁGENES Y VIDEOS =============== */
+.media-modal {
+    display: none;
+    position: fixed;
+    z-index: 999999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+
+.media-modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal-img, #modal-video {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+}
+/* NAVBAR FIJA ARRIBA */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+/* para que el contenido no quede tapado por la navbar */
+body {
+    margin: 0;
+}
+
+main.container {
+    padding-top: 80px; /* ajusta según la altura de tu navbar */
+}
+
+/* flechita flotante de nuevas publicaciones */
+.new-posts-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: #2563eb;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    cursor: pointer;
+    font-size: 0.9rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+/* acciones del dueño del post */
+.own-post-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.own-post-actions .btn-link {
+    background: transparent;
+    border: none;
+    color: #60a5fa;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* modal para imagen/video grande */
+.media-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+}
+
+.media-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+}
+
+.media-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    z-index: 1501;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.media-modal-media {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+}
+
+.media-modal-close {
+    border: none;
+    background: #111827;
+    color: #fff;
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    margin-bottom: 0.4rem;
+}
+
+
+.media-modal-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 2.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    user-select:none;
+}
+.media-modal-close:hover {
+    color: #f87171;
+}
+
+}

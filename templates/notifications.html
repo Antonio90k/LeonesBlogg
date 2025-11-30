@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<button type="button" class="btn-secondary" onclick="history.back()">
+    ← Volver
+</button>
+
+<h1>Notificaciones</h1>
+
+<section class="notifications">
+    {% for n in notifications %}
+        <article class="card notification-card">
+            <header class="notification-header">
+                <span class="notification-icon">🔔</span>
+                <span class="notification-type">
+                    {{ n.type|capitalize }}
+                </span>
+                <span class="notification-date">
+                    {{ n.created_at }}
+                </span>
+            </header>
+
+            <p class="notification-text">
+                {{ n.text }}
+            </p>
+
+            {% if n.url %}
+            <div class="notification-actions">
+                <a href="{{ n.url }}" class="btn-link">Ver detalle</a>
+            </div>
+            {% endif %}
+        </article>
+    {% else %}
+        <div class="card">
+            <p>No tienes notificaciones.</p>
+        </div>
+    {% endfor %}
+</section>
+
+{% endblock %}

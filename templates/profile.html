@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- =============== CABECERA DEL PERFIL =============== -->
+<section class="card profile-header">
+    <div class="profile-header-main">
+        <img
+            src="{% if profile_user.profile_image %}{{ url_for('static', filename='avatars/' ~ profile_user.profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+            alt="Avatar de {{ profile_user.username }}"
+            class="profile-avatar">
+
+        <div class="profile-info">
+            <h1 class="profile-username">{{ profile_user.username }}</h1>
+            <p class="profile-bio">
+                {% if profile_user.bio %}
+                    {{ profile_user.bio }}
+                {% else %}
+                    <span class="profile-bio-empty">Este usuario aún no ha escrito una descripción.</span>
+                {% endif %}
+            </p>
+
+            {% if profile_user.link %}
+                <p class="profile-link">
+                    🔗 <a href="{{ profile_user.link }}" target="_blank" rel="noopener">
+                        {{ profile_user.link }}
+                    </a>
+                </p>
+            {% endif %}
+
+            <p class="profile-stats">
+                Publicaciones: {{ posts|length }}
+                {% if saved_posts %} · Guardados: {{ saved_posts|length }}{% endif %}
+            </p>
+
+            {% if user and user.id == profile_user.id %}
+                <div class="profile-actions">
+                    <a href="{{ url_for('edit_profile') }}" class="btn-link">✏️ Editar perfil</a>
+
+                    <form action="{{ url_for('upload_avatar') }}"
+                          method="post"
+                          enctype="multipart/form-data"
+                          class="profile-avatar-form">
+                        <label class="btn-link">
+                            📷 Cambiar avatar
+                            <input type="file" name="avatar" accept="image/*" onchange="this.form.submit()" hidden>
+                        </label>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- =============== PUBLICACIONES DEL USUARIO =============== -->
+<section class="profile-posts">
+    <h2>Publicaciones de {{ profile_user.username }}</h2>
+
+    {% if posts %}
+        {% for post in posts %}
+            <article class="post card post-fixed{% if not post.image_filename %} text-only-card{% endif %}"
+                     data-post-id="{{ post.id }}">
+                <header class="post-header">
+                    <h3>{{ post.title or 'Publicación' }}</h3>
+                    <p class="meta">
+                        <span class="user-inline">
+                            <img
+                                src="{% if post.user_profile_image %}{{ url_for('static', filename='avatars/' ~ post.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                alt="Avatar de {{ post.username }}"
+                                class="avatar-inline">
+                            <a href="{{ url_for('profile', username=post.username) }}">{{ post.username }}</a>
+                        </span>
+                        · {{ post.created_at }}
+                    </p>
+                </header>
+
+                <div class="post-text-body">
+                    <p>{{ post.content|linkify_mentions }}</p>
+                </div>
+
+                {# ---- MEDIOS (IMÁGENES / VIDEO, SOPORTA MULTI) ---- #}
+                {% if post.image_filename %}
+                    {% set media_list = post.image_filename.split('||') %}
+                    <div class="post-media-wrapper"
+                         data-media-count="{{ media_list|length }}">
+                        {% if media_list|length > 1 %}
+                            <button class="media-nav-btn carousel-prev" type="button">‹</button>
+                        {% endif %}
+
+                        <div class="post-carousel-inner">
+                            {% for fname in media_list %}
+                                {% set ext = fname.rsplit('.', 1)[1]|lower %}
+                                {% if ext in ['jpg','jpeg','png','gif','webp'] %}
+                                    <img src="{{ url_for('static', filename='uploads/' ~ fname) }}"
+                                         alt="Imagen del post"
+                                         class="post-media post-image media-clickable{% if not loop.first %} hidden{% endif %}"
+                                         data-media-index="{{ loop.index0 }}"
+                                         data-full-url="{{ url_for('static', filename='uploads/' ~ fname) }}">
+                                {% elif ext in ['mp4','webm','ogg'] %}
+                                    <video class="post-media post-video media-clickable{% if not loop.first %} hidden{% endif %}"
+                                           data-media-index="{{ loop.index0 }}"
+                                           data-full-url="{{ url_for('static', filename='uploads/' ~ fname) }}"
+                                           controls>
+                                        <source src="{{ url_for('static', filename='uploads/' ~ fname) }}"
+                                                type="video/{{ ext }}">
+                                        Tu navegador no soporta video.
+                                    </video>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        {% if media_list|length > 1 %}
+                            <button class="media-nav-btn carousel-next" type="button">›</button>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <div class="reactions-summary">
+                    Reacciones:
+                    👍 <span id="react-like-{{ post.id }}">{{ post.reactions_by_type.get('like', 0) }}</span>
+                    ❤️ <span id="react-love-{{ post.id }}">{{ post.reactions_by_type.get('love', 0) }}</span>
+                    😮 <span id="react-wow-{{ post.id }}">{{ post.reactions_by_type.get('wow', 0) }}</span>
+                    😢 <span id="react-sad-{{ post.id }}">{{ post.reactions_by_type.get('sad', 0) }}</span>
+                    😡 <span id="react-angry-{{ post.id }}">{{ post.reactions_by_type.get('angry', 0) }}</span>
+                    · Comentarios:
+                    <span id="comments-count-{{ post.id }}">{{ post.comments|length }}</span>
+                </div>
+
+                {% if user %}
+                    <div class="post-actions">
+                        <form method="post"
+                              action="{{ url_for('react_post', post_id=post.id) }}"
+                              data-react-form>
+                            <button type="submit" name="reaction_type" value="like">👍 Like</button>
+                            <button type="submit" name="reaction_type" value="love">❤️ Love</button>
+                            <button type="submit" name="reaction_type" value="wow">😮 Wow</button>
+                            <button type="submit" name="reaction_type" value="sad">😢 Sad</button>
+                            <button type="submit" name="reaction_type" value="angry">😡 Angry</button>
+                        </form>
+
+                        <form method="post" action="{{ url_for('toggle_save_post', post_id=post.id) }}">
+                            <button type="submit">⭐ Guardar</button>
+                        </form>
+
+                        <button type="button" class="share-btn" data-post-id="{{ post.id }}">Compartir</button>
+
+                        <form method="post" action="{{ url_for('report_post', post_id=post.id) }}">
+                            <input type="hidden" name="reason" value="Inapropiado">
+                            <button type="submit">Reportar</button>
+                        </form>
+
+                        {# --- SOLO DUEÑO DEL PERFIL: EDITAR / ELIMINAR --- #}
+                        {% if user.id == profile_user.id %}
+                            <a href="{{ url_for('edit_own_post', post_id=post.id) }}"
+                               class="btn-link">✏️ Editar</a>
+
+                            <form method="post"
+                                  action="{{ url_for('delete_own_post', post_id=post.id) }}"
+                                  onsubmit="return confirm('¿Seguro que quieres borrar esta publicación?');">
+                                <button type="submit" class="danger">🗑 Eliminar</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {# ------ COMENTARIOS ------ #}
+                <section class="comments">
+                    <h4>Comentarios</h4>
+
+                    <ul class="comments-list" data-comments-list="{{ post.id }}">
+                        {% set all_comments = post.comments %}
+                        {% for c in all_comments if not c.parent_comment_id %}
+                            <li class="comment" data-comment-id="{{ c.id }}">
+                                <div class="comment-main">
+                                    <div class="comment-body">
+                                        <span class="user-inline">
+                                            <img
+                                                src="{% if c.user_profile_image %}{{ url_for('static', filename='avatars/' ~ c.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                                alt="Avatar de {{ c.username }}"
+                                                class="avatar-inline">
+                                            <a href="{{ url_for('profile', username=c.username) }}">{{ c.username }}</a>
+                                        </span>
+                                        : {{ c.content|linkify_mentions }}
+                                        <span class="comment-date">{{ c.created_at }}</span>
+                                    </div>
+                                </div>
+
+                                {% if user %}
+                                    <button type="button"
+                                            class="reply-toggle"
+                                            data-target="{{ c.id }}">
+                                        Responder
+                                    </button>
+
+                                    <form method="post"
+                                          action="{{ url_for('comment_post', post_id=post.id) }}"
+                                          class="comment-form reply-form"
+                                          data-comment-form
+                                          data-parent-id="{{ c.id }}"
+                                          style="display:none; margin-left:1.5rem; margin-top:0.3rem;">
+                                        <input type="text" name="content" placeholder="Responder..." required>
+                                        <input type="hidden" name="parent_comment_id" value="{{ c.id }}">
+                                        <button type="submit">Responder</button>
+                                    </form>
+                                {% endif %}
+
+                                <ul class="replies"
+                                    data-replies-for="{{ c.id }}"
+                                    style="margin-left:1.5rem; margin-top:0.3rem;">
+                                    {% for r in all_comments if r.parent_comment_id == c.id %}
+                                        <li class="comment-reply" data-comment-id="{{ r.id }}">
+                                            <div class="comment-main">
+                                                <div class="comment-body">
+                                                    <span class="user-inline">
+                                                        <img
+                                                            src="{% if r.user_profile_image %}{{ url_for('static', filename='avatars/' ~ r.user_profile_image) }}{% else %}{{ DEFAULT_AVATAR_URL }}{% endif %}"
+                                                            alt="Avatar de {{ r.username }}"
+                                                            class="avatar-inline">
+                                                        <a href="{{ url_for('profile', username=r.username) }}">{{ r.username }}</a>
+                                                    </span>
+                                                    : {{ r.content|linkify_mentions }}
+                                                    <span class="comment-date">{{ r.created_at }}</span>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if user %}
+                        <form method="post"
+                              action="{{ url_for('comment_post', post_id=post.id) }}"
+                              class="comment-form"
+                              data-comment-form>
+                            <input type="text"
+                                   name="content"
+                                   placeholder="Escribe un comentario..."
+                                   required>
+                            <input type="hidden" name="parent_comment_id" value="">
+                            <button type="submit">Comentar</button>
+                        </form>
+                    {% endif %}
+                </section>
+            </article>
+        {% endfor %}
+    {% else %}
+        <div class="card">
+            <p>Este usuario aún no tiene publicaciones.</p>
+        </div>
+    {% endif %}
+</section>
+
+<!-- =============== PUBLICACIONES GUARDADAS (SOLO DUEÑO) =============== -->
+{% if user and user.id == profile_user.id and saved_posts %}
+<section class="profile-saved">
+    <h2>Publicaciones guardadas</h2>
+    <ul class="saved-list">
+        {% for p in saved_posts %}
+            <li>
+                <a href="{{ url_for('view_post', post_id=p.id) }}">
+                    {{ p.title or 'Publicación' }} · {{ p.username }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% endblock %}
